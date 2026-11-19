@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs><mask id="m"><rect width="32" height="32" fill="#fff"/>
+    <g transform="translate(14 19.5) rotate(-7)"><circle cx="-4.4" cy="0" r="3" fill="#000"/><rect x="0.4" y="-1.25" width="6.6" height="2.5" rx="1.25" fill="#000"/></g>
+  </mask></defs>
+  <g transform="translate(18 11.5) rotate(11)"><rect x="-9.5" y="-6.75" width="19" height="13.5" rx="3" fill="none" stroke="#000" stroke-width="2.4"/></g>
+  <g mask="url(#m)"><g transform="translate(14 19.5) rotate(-7)"><rect x="-10.5" y="-7.25" width="21" height="14.5" rx="3.2" fill="#000"/></g></g>
+</svg>

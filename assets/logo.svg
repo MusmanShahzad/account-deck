@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2a2620"/><stop offset=".5" stop-color="#171512"/><stop offset="1" stop-color="#0b0a08"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ede5d3" stop-opacity=".10"/><stop offset=".45" stop-color="#ede5d3" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="badge" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f07a50"/><stop offset="1" stop-color="#c9431f"/>
+    </linearGradient>
+    <linearGradient id="face" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f4ecdb"/><stop offset="1" stop-color="#e2d7c0"/>
+    </linearGradient>
+    <filter id="drop" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="20" stdDeviation="24" flood-color="#000" flood-opacity=".55"/>
+    </filter>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="186" fill="url(#bg)"/>
+  <rect x="100" y="100" width="824" height="824" rx="186" fill="url(#shine)"/>
+  <rect x="122" y="122" width="780" height="780" rx="166" fill="none" stroke="#ede5d3" stroke-opacity=".12" stroke-width="3"/>
+  <g transform="translate(560 420) rotate(11)"><rect x="-215" y="-150" width="430" height="300" rx="46" fill="none" stroke="#ede5d3" stroke-opacity=".5" stroke-width="10"/></g>
+  <g transform="translate(476 548) rotate(-7)" filter="url(#drop)">
+    <rect x="-225" y="-157" width="450" height="314" rx="48" fill="url(#face)"/>
+    <circle cx="-128" cy="-34" r="58" fill="#171512"/>
+    <circle cx="-128" cy="-52" r="20" fill="#f4ecdb"/>
+    <path d="M-164 -6a36 30 0 0 1 72 0z" fill="#f4ecdb"/>
+    <rect x="-46" y="-66" width="214" height="30" rx="15" fill="#171512"/>
+    <rect x="-46" y="-10" width="150" height="24" rx="12" fill="#b3a68d"/>
+    <rect x="-186" y="74" width="372" height="14" rx="7" fill="#cfc3aa"/>
+    <rect x="-186" y="74" width="236" height="14" rx="7" fill="#e5582f"/>
+  </g>
+  <g transform="translate(722 716)" filter="url(#drop)">
+    <circle r="112" fill="url(#badge)"/>
+    <circle r="112" fill="none" stroke="#0d0c0a" stroke-width="16"/>
+    <path d="M-48.94 -22.82A54 54 0 0 1 40.13 -36.13" fill="none" stroke="#fff" stroke-width="20" stroke-linecap="round"/><path d="M51.91 -23.05L10.43 -28.76L50.56 -64.9Z" fill="#fff" stroke="#fff" stroke-width="7" stroke-linejoin="round"/><path d="M48.94 22.82A54 54 0 0 1 -40.13 36.13" fill="none" stroke="#fff" stroke-width="20" stroke-linecap="round"/><path d="M-51.91 23.05L-10.43 28.76L-50.56 64.9Z" fill="#fff" stroke="#fff" stroke-width="7" stroke-linejoin="round"/>
+  </g>
+</svg>
