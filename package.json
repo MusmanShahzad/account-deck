@@ -12,7 +12,8 @@
     "dist:mac": "electron-builder --mac",
     "dist:win": "electron-builder --win",
     "dist:linux": "electron-builder --linux",
-    "icons": "node assets/make-logo.mjs && electron assets/render-icons.cjs"
+    "icons": "node assets/make-logo.mjs && electron assets/render-icons.cjs",
+    "dist": "electron-builder --mac --win --linux"
   },
   "devDependencies": {
     "electron": "^39.0.0",
@@ -33,33 +34,79 @@
     ],
     "mac": {
       "target": [
-        "dmg"
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
       ],
       "category": "public.app-category.developer-tools",
       "extendInfo": {
         "LSUIElement": true
       },
-      "icon": "build/icon.icns"
+      "icon": "build/icon.icns",
+      "identity": "-",
+      "artifactName": "Account-Deck-mac-${arch}.${ext}"
     },
     "win": {
       "target": [
-        "nsis"
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
       "icon": "build/icon.png"
     },
     "linux": {
       "target": [
-        "AppImage"
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
       "category": "Development",
-      "icon": "build/icon.png"
+      "icon": "build/icon.png",
+      "artifactName": "Account-Deck-linux-${arch}.${ext}",
+      "synopsis": "Switch between saved AI tool accounts"
     },
     "directories": {
       "buildResources": "build"
     },
     "dmg": {
-      "icon": "build/icon.icns"
-    }
+      "icon": "build/icon.icns",
+      "title": "Account Deck",
+      "contents": [
+        {
+          "x": 150,
+          "y": 200
+        },
+        {
+          "x": 450,
+          "y": 200,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "window": {
+        "width": 600,
+        "height": 400
+      }
+    },
+    "nsis": {
+      "artifactName": "Account-Deck-windows-${arch}-setup.${ext}",
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Account Deck"
+    },
+    "publish": null
   },
   "license": "MIT",
   "engines": {
@@ -74,5 +121,13 @@
     "account-switcher",
     "menu-bar",
     "electron"
-  ]
+  ],
+  "homepage": "https://github.com/MusmanShahzad/account-deck",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MusmanShahzad/account-deck.git"
+  },
+  "bugs": {
+    "url": "https://github.com/MusmanShahzad/account-deck/issues"
+  }
 }
