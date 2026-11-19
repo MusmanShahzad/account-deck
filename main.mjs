@@ -8,6 +8,9 @@ import { fileURLToPath } from 'node:url';
 import { start, state, routes, PROVIDERS, store } from './server.mjs';
 
 const MAC = process.platform === 'darwin';
+const WINDOWS = process.platform === 'win32';
+// Windows only shows notifications for an app with an id; this matches the installer's appId.
+if (WINDOWS) app.setAppUserModelId('local.accountdeck.app');
 let tray = null, win = null, port = 0, lastMenu = '', working = false, known = null;
 const unlockTried = new Map();
 
@@ -167,7 +170,7 @@ function refreshMenu() {
   const ids = new Set(providers.flatMap((p) => p.profiles.map((a) => `${p.id}/${a.id}`)));
   if (known && Notification.isSupported()) {
     for (const p of providers) for (const a of p.profiles) {
-      if (!known.has(`${p.id}/${a.id}`)) new Notification({ title: `${p.name} account saved`, body: `${a.label || a.email} is ready to switch to.`, ...(MAC ? {} : { icon: LOGO }) }).show();
+      if (!known.has(`${p.id}/${a.id}`)) new Notification({ title: `${p.name} account saved`, body: `${a.label || a.email} is ready to switch to.`, ...(MAC ? {} : { icon: nativeImage.createFromPath(LOGO) }) }).show();
     }
   }
   known = ids;
@@ -222,6 +225,8 @@ app.whenReady().then(async () => {
   log('page on port', port);
   tray = new Tray(trayIcon());
   tray.setToolTip('Account Deck');
+  // Windows opens a tray menu only on right-click by default; a left-click should open it too.
+  if (WINDOWS) tray.on('click', () => tray.popUpContextMenu());
   refreshMenu();
   setInterval(refreshMenu, 5000);
   setTimeout(refreshUsage, 3000);
