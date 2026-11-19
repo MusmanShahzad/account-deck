@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Account Deck</title>
+<link rel="icon" type="image/svg+xml" href="/logo.svg">
+<link rel="apple-touch-icon" href="/logo.svg">
+<meta name="color-scheme" content="light dark">
+<script>try { const t = localStorage.getItem('deck-theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch {}</script>
+<style>
+  /* Account Deck — a dark, editorial ledger. System fonts only, so it works offline. */
+  :root {
+    --ink: #0d0c0a; --paper: #141210; --sheet: #1a1814; --sheet-2: #201d18;
+    --rule: #2e2a24; --rule-soft: #24211c; --cream: #ede5d3; --text: #e4dccb; --muted: #8d8576; --faint: #5f594f;
+    --accent: #e5582f; --accent-soft: rgba(229, 88, 47, .14); --ok: #9cc58f; --warn: #dcaa4a; --bad: #e46c56; --track: #2a2620;
+    --claude: #d9825f; --claude-desktop: #d9825f; --codex: #6fbf9f; --cursor: #a99cf0; --antigravity: #e39a4d;
+    --glow: rgba(229, 88, 47, .07); --shadow: rgba(0, 0, 0, .55); --backdrop: rgba(5, 4, 3, .72);
+    --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .95 0 0 0 0 .85 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "New York", ui-serif, Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    color-scheme: dark;
+  }
+  /* Light: the same ledger printed on warm newsprint. --ink is always the ground, --cream the strongest ink. */
+  :root[data-theme="light"] {
+    --ink: #f2ece0; --paper: #ece5d6; --sheet: #faf6ee; --sheet-2: #f4eee2;
+    --rule: #d6cbb6; --rule-soft: #e3dac9; --cream: #1b1814; --text: #2c2721; --muted: #6d6455; --faint: #9a8f7c;
+    --accent: #c4421d; --accent-soft: rgba(196, 66, 29, .10); --ok: #3d7a37; --warn: #9c6b14; --bad: #b23b27; --track: #e2d9c8;
+    --claude: #bb5d38; --claude-desktop: #bb5d38; --codex: #2b8564; --cursor: #6353c9; --antigravity: #b96614;
+    --glow: rgba(196, 66, 29, .06); --shadow: rgba(60, 45, 25, .18); --backdrop: rgba(40, 32, 22, .35);
+    --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .3 0 0 0 0 .22 0 0 0 0 .1 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: light) {
+    /* Light: the same ledger printed on warm newsprint. --ink is always the ground, --cream the strongest ink. */
+    :root:not([data-theme="dark"]) {
+      --ink: #f2ece0; --paper: #ece5d6; --sheet: #faf6ee; --sheet-2: #f4eee2;
+      --rule: #d6cbb6; --rule-soft: #e3dac9; --cream: #1b1814; --text: #2c2721; --muted: #6d6455; --faint: #9a8f7c;
+      --accent: #c4421d; --accent-soft: rgba(196, 66, 29, .10); --ok: #3d7a37; --warn: #9c6b14; --bad: #b23b27; --track: #e2d9c8;
+      --claude: #bb5d38; --claude-desktop: #bb5d38; --codex: #2b8564; --cursor: #6353c9; --antigravity: #b96614;
+      --glow: rgba(196, 66, 29, .06); --shadow: rgba(60, 45, 25, .18); --backdrop: rgba(40, 32, 22, .35);
+      --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .3 0 0 0 0 .22 0 0 0 0 .1 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      color-scheme: light;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--ink); }
+  body {
+    margin: 0; min-height: 100vh; color: var(--text); font: 14px/1.5 var(--sans);
+    background: radial-gradient(1200px 600px at 85% -10%, var(--glow), transparent 60%), var(--grain), var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--accent); color: var(--ink); }
+  .wrap { max-width: 1440px; margin: 0 auto; padding: 0 28px; }
+  .label { font: 500 10.5px/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+
+  /* Masthead */
+  header.top { padding-top: 22px; }
+  .dateline { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding-bottom: 12px; border-bottom: 1px solid var(--rule); }
+  .dateline .right { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .theme { display: inline-flex; border: 1px solid var(--rule); border-radius: 3px; overflow: hidden; }
+  .theme button { border: 0; border-radius: 0; min-height: 22px; padding: 0 9px; font: 500 9.5px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
+  .theme button + button { border-left: 1px solid var(--rule); }
+  .theme button[aria-pressed="true"] { background: var(--cream); color: var(--ink); }
+  .theme button:hover:not([aria-pressed="true"]) { color: var(--accent); }
+  .dateline .live::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--ok); margin-right: 8px; vertical-align: 1px; box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 18%, transparent); }
+  .title { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; padding: 26px 0 22px; }
+  .brand { display: flex; align-items: center; gap: 18px; min-width: 0; }
+  .brand img { width: 64px; height: 64px; flex: none; margin: -6px -4px -6px -8px; }
+  h1 { font: 400 clamp(38px, 5.4vw, 64px)/0.95 var(--serif); letter-spacing: -0.025em; margin: 0; color: var(--cream); }
+  h1 em { font-style: italic; color: var(--accent); }
+  .lede { max-width: 440px; margin: 0; font: italic 400 17px/1.45 var(--serif); color: var(--muted); }
+  .lede b { font-style: normal; font-weight: 400; color: var(--text); }
+  .double-rule { height: 4px; border-top: 1px solid var(--cream); border-bottom: 1px solid var(--rule); opacity: .9; }
+
+  /* The deck: one column per tool, set apart by hairlines like a broadsheet */
+  main { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); padding: 0 0 40px; align-items: start; }
+  .col { padding: 26px 24px 8px; min-width: 0; border-left: 1px solid var(--rule-soft); }
+  .col:first-child { border-left: 0; padding-left: 0; }
+  .col-head { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 4px 12px; margin-bottom: 4px; }
+  .col-head .num { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; }
+  .mark { width: 22px; height: 2px; background: var(--brand); flex: none; }
+  .col-head h2 { font: 400 28px/1.1 var(--serif); letter-spacing: -0.015em; margin: 0; color: var(--cream); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .status { margin: 6px 0 18px; padding-bottom: 14px; border-bottom: 1px solid var(--rule); }
+  .status.label { color: var(--faint); }
+  .status .on { color: var(--ok); }
+  .cards { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+
+  /* An account */
+  .card { position: relative; min-width: 0; background: linear-gradient(180deg, var(--sheet), var(--paper)); border: 1px solid var(--rule-soft); border-radius: 4px; padding: 16px 16px 12px; transition: border-color .2s, transform .2s; }
+  .card:hover { border-color: var(--rule); }
+  .card.active { border-color: color-mix(in srgb, var(--brand) 45%, var(--rule)); background: linear-gradient(180deg, color-mix(in srgb, var(--brand) 7%, var(--sheet)), var(--paper)); }
+  .card.active::before { content: ""; position: absolute; left: -1px; top: 14px; bottom: 14px; width: 2px; background: var(--brand); }
+  .who { display: flex; align-items: center; gap: 12px; }
+  .avatar { width: 38px; height: 38px; border-radius: 50%; border: 1px solid color-mix(in srgb, var(--brand) 60%, transparent); color: var(--brand); display: grid; place-items: center; font: italic 400 19px/1 var(--serif); flex: none; text-transform: uppercase; background: color-mix(in srgb, var(--brand) 8%, transparent); }
+  .names { min-width: 0; flex: 1; }
+  .names b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 17px/1.25 var(--serif); color: var(--cream); }
+  .names span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; font: 400 11px/1.4 var(--mono); letter-spacing: .04em; color: var(--muted); }
+  .pill { font: 500 10px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; padding: 6px 8px; border-radius: 2px; border: 1px solid var(--rule); color: var(--muted); white-space: nowrap; flex: none; }
+  .pill.on { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, transparent); background: color-mix(in srgb, var(--ok) 7%, transparent); }
+
+  button { font: 500 12px/1 var(--sans); color: var(--text); cursor: pointer; border-radius: 3px; border: 1px solid var(--rule); background: transparent; padding: 0 14px; min-height: 32px; transition: background .15s, border-color .15s, color .15s; }
+  body, .card, .col, header.top, footer.colophon { transition: background-color .25s, color .25s, border-color .25s; }
+  button:hover { border-color: var(--muted); color: var(--cream); }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button:disabled { opacity: .4; cursor: default; }
+  button.primary { background: var(--cream); border-color: var(--cream); color: var(--ink); font-weight: 600; letter-spacing: .01em; }
+  button.primary:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); color: var(--ink); }
+  .col-head > button { font: 500 10.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; min-height: 28px; padding: 0 10px; color: var(--muted); }
+  .col-head > button::before { content: "+ "; color: var(--accent); }
+  button.link { border: 0; padding: 4px 6px; min-height: 0; font: 500 10px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--faint); }
+  button.link:hover { color: var(--accent); }
+
+  /* Usage */
+  .meters { margin-top: 16px; display: grid; gap: 11px; }
+  .meter .row { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 2px 10px; font-size: 12px; color: var(--muted); }
+  .meter .row b { font: 500 12px var(--mono); color: var(--cream); margin-left: 4px; }
+  .meter .row span:last-child { font: 400 11px var(--mono); color: var(--faint); text-align: right; }
+  .bar { height: 3px; background: var(--track); overflow: hidden; margin-top: 6px; }
+  .bar i { display: block; height: 100%; background: var(--ok); }
+  .bar i.mid { background: var(--warn); } .bar i.high { background: var(--bad); }
+  .note { margin: 12px 0 0; font: italic 400 13.5px/1.45 var(--serif); color: var(--muted); }
+  .note.err { color: var(--bad); font-style: normal; font-family: var(--sans); font-size: 12.5px; padding-left: 10px; border-left: 2px solid currentColor; }
+  .col > .note.err { margin: -6px 0 16px; }
+  .foot { display: flex; align-items: center; gap: 2px; margin-top: 14px; padding-top: 10px; border-top: 1px dashed var(--rule-soft); flex-wrap: wrap; }
+  .foot .age { flex: 1 0 100%; margin-bottom: 4px; font: 400 10.5px/1.4 var(--mono); letter-spacing: .06em; color: var(--faint); }
+  .foot button.link:first-of-type { margin-left: -6px; }
+  .empty { padding: 18px 0; font: italic 400 15px/1.5 var(--serif); color: var(--muted); }
+  .empty::before { content: "— "; color: var(--faint); }
+
+  /* Colophon */
+  footer.colophon { border-top: 1px solid var(--rule); padding: 18px 0 32px; display: flex; justify-content: space-between; gap: 12px 24px; flex-wrap: wrap; }
+  footer.colophon p { margin: 0; font: italic 400 13px/1.5 var(--serif); color: var(--faint); }
+  footer.colophon a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--rule); }
+  footer.colophon a:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* Dialogs and toasts */
+  dialog { border: 1px solid var(--rule); border-radius: 4px; background: var(--sheet); color: var(--text); padding: 22px; width: min(420px, calc(100vw - 32px)); box-shadow: 0 30px 80px var(--shadow); }
+  dialog::backdrop { background: var(--backdrop); backdrop-filter: blur(3px); }
+  dialog p { margin: 0; font: 400 16px/1.5 var(--serif); color: var(--cream); }
+  dialog label { display: block; margin-bottom: 10px; font: 500 10.5px/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+  dialog input { width: 100%; font: 400 18px var(--serif); padding: 8px 2px; border: 0; border-bottom: 1px solid var(--rule); background: transparent; color: var(--cream); border-radius: 0; }
+  dialog input:focus { outline: none; border-color: var(--accent); }
+  dialog menu { display: flex; justify-content: flex-end; gap: 8px; padding: 0; margin: 20px 0 0; }
+  #toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 8px); background: var(--cream); color: var(--ink); padding: 12px 18px; border-radius: 3px; max-width: calc(100vw - 32px); font: 400 15px/1.4 var(--serif); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; box-shadow: 0 16px 40px var(--shadow); }
+  #toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (max-width: 640px) {
+    .wrap { padding: 0 16px; }
+    .col { border-left: 0; padding: 22px 0 4px; border-top: 1px solid var(--rule-soft); }
+    .col:first-child { border-top: 0; }
+    .brand img { width: 48px; height: 48px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<header class="top wrap">
+  <div class="dateline"><span class="label live" id="dateline">Local edition</span><div class="right"><span class="label">Logins never leave this computer</span>
+    <div class="theme" role="group" aria-label="Theme"><button type="button" data-theme-set="auto">Auto</button><button type="button" data-theme-set="light">Light</button><button type="button" data-theme-set="dark">Dark</button></div></div></div>
+  <div class="title">
+    <div class="brand"><img src="/logo.svg" alt="" width="64" height="64"><h1>Account <em>Deck</em></h1></div>
+    <p class="lede">A quiet ledger of the accounts you keep. <b>One click</b> changes who is signed in; nothing is sent anywhere but the tool's own service.</p>
+  </div>
+  <div class="double-rule"></div>
+</header>
+<main id="deck" class="wrap"></main>
+<footer class="colophon wrap">
+  <p>Set in Iowan Old Style &amp; SF Mono. Made for people with more than one account.</p>
+  <p>Open source, MIT licensed. Not affiliated with Anthropic, OpenAI, Anysphere or Google.</p>
+</footer>
+<dialog id="rename"><form method="dialog">
+  <label for="rename-input">Name for this account</label>
+  <input id="rename-input" maxlength="40" autocomplete="off">
+  <menu><button type="button" id="rename-cancel">Cancel</button><button class="primary" value="ok">Save</button></menu>
+</form></dialog>
+<dialog id="ask"><p id="ask-text"></p>
+  <menu><button type="button" id="ask-no">Cancel</button><button class="primary" type="button" id="ask-yes">Continue</button></menu>
+</dialog>
+<div id="toast" role="status"></div>
+<script>
+const TOKEN = '__DECK_TOKEN__';
+
+// Theme: Auto follows the system; a chosen Light or Dark is remembered on this computer.
+function setTheme(t) {
+  if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
+  for (const b of document.querySelectorAll('[data-theme-set]')) b.setAttribute('aria-pressed', String(b.dataset.themeSet === (t || 'auto')));
+}
+let savedTheme = 'auto';
+try { savedTheme = localStorage.getItem('deck-theme') || 'auto'; } catch {}
+setTheme(savedTheme);
+document.querySelector('.theme').addEventListener('click', (ev) => {
+  const t = ev.target.closest('[data-theme-set]')?.dataset.themeSet;
+  if (!t) return;
+  setTheme(t);
+  try { t === 'auto' ? localStorage.removeItem('deck-theme') : localStorage.setItem('deck-theme', t); } catch {}
+});
+document.getElementById('dateline').textContent = 'Local edition · ' + new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+const deck = document.getElementById('deck');
+
+// In-page confirmation. Replaces window.confirm(), which the desktop window does not always show.
+function ask(text) {
+  return new Promise((resolve) => {
+    const d = document.getElementById('ask');
+    document.getElementById('ask-text').textContent = text;
+    document.getElementById('ask-yes').onclick = () => { d.close(); resolve(true); };
+    document.getElementById('ask-no').onclick = () => { d.close(); resolve(false); };
+    d.addEventListener('close', () => resolve(false), { once: true });
+    d.showModal();
+  });
+}
+
+document.getElementById('rename-cancel').addEventListener('click', () => document.getElementById('rename').close());
+const tried = new Map();
+const unlockTried = new Map();
+let providers = [], working = '';
+
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast.timer); toast.timer = setTimeout(() => t.classList.remove('show'), 5000);
+}
+
+async function api(path, body) {
+  const r = await fetch('/api/' + path, {
+    method: body ? 'POST' : 'GET',
+    headers: { 'x-deck-token': TOKEN, 'content-type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const j = await r.json();
+  if (j.providers) { providers = j.providers; render(); }
+  if (!r.ok) throw new Error(j.error || 'Request failed');
+  return j;
+}
+
+function ago(ts) {
+  const m = Math.round((Date.now() - ts) / 60000);
+  return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`;
+}
+function until(ts) {
+  const m = Math.round((ts - Date.now()) / 60000);
+  if (m <= 0) return 'resets soon';
+  return 'resets in ' + (m < 60 ? `${m} min` : m < 2880 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${Math.round(m / 1440)} days`);
+}
+
+function meter(m) {
+  const pct = Math.max(0, Math.min(100, m.usedPercent || 0));
+  const cls = pct >= 90 ? 'high' : pct >= 70 ? 'mid' : '';
+  const right = [m.detail, m.resetsAt ? until(m.resetsAt) : ''].filter(Boolean).join(' · ');
+  return `<div class="meter"><div class="row"><span>${esc(m.label)} <b>${Math.round(pct)}%</b></span><span>${esc(right)}</span></div>
+    <div class="bar"><i class="${cls}" style="width:${pct}%"></i></div></div>`;
+}
+
+function card(p, a) {
+  const u = a.usage || {};
+  const title = a.label || a.email;
+  const act = (name) => `data-act="${name}" data-p="${p.id}" data-id="${a.id}"`;
+  return `<div class="card ${a.active ? 'active' : ''}">
+    <div class="who">
+      <div class="avatar">${esc((title || '?')[0])}</div>
+      <div class="names"><b title="${esc(title)}">${esc(title)}</b><span>${esc([a.label ? a.email : '', a.plan].filter(Boolean).join(' · '))}</span></div>
+      ${a.active ? '<span class="pill on">Signed in</span>' : `<button class="primary" ${act(a.needsSignIn ? 'resign' : 'switch')} ${p.busy || working ? 'disabled' : ''}>${a.needsSignIn ? 'Sign in again' : 'Switch'}</button>`}
+    </div>
+    ${u.meters?.length ? `<div class="meters">${u.meters.map(meter).join('')}</div>` : ''}
+    ${a.needsSignIn && !u.ended ? '<p class="note err">Saved without its sign-in. Use Sign in again, then sign in to it once in the app.</p>' : u.note ? `<p class="note">${esc(u.note)}</p>` : ''}
+    ${u.error ? `<p class="note err">${esc(u.error)}</p>` : ''}
+    ${a.signedOut && !a.needsSignIn ? `<p class="note err">Signed out inside ${esc(p.name)}, which usually ends this saved login. If it opens signed out after a switch, sign in once and it is saved again.</p>` : ''}
+    <div class="foot">
+      <span class="age">${u.fetchedAt ? 'Checked ' + ago(u.fetchedAt) : 'Not checked yet'}</span>
+      <button class="link" ${act('usage')}>Refresh</button>
+      <button class="link" ${act('rename')}>Rename</button>
+      ${a.active ? '' : `<button class="link" ${act('remove')}>Remove</button>`}
+    </div>
+  </div>`;
+}
+
+function column(p, i) {
+  const status = p.busy ? `Switching ${p.name}…` : !p.installed ? 'Not installed here' : p.restart ? (p.running ? '<span class="on">Open</span>' : 'Closed') : 'Installed';
+  const count = p.profiles.length ? ` · ${p.profiles.length} account${p.profiles.length === 1 ? '' : 's'}` : '';
+  return `<section class="col" style="--brand: var(--${p.id})">
+    <div class="col-head"><span class="num label"><span class="mark"></span>No. ${String(i + 1).padStart(2, '0')}</span><h2>${esc(p.name)}</h2>
+      ${p.installed ? `<button data-act="signout" data-p="${p.id}" ${p.busy || working ? 'disabled' : ''}>Add account</button>` : ''}</div>
+    <p class="status label">${p.busy ? esc(status) : status}${count}${p.experimental ? ' · untested' : ''}</p>
+    ${p.error ? `<p class="note err">${esc(p.error)}</p>` : ''}
+    <div class="cards">${p.profiles.length ? p.profiles.map((a) => card(p, a)).join('') : `<div class="empty">${p.installed ? 'No accounts yet. Sign in to ' + esc(p.name) + ' and it appears here.' : 'Install ' + esc(p.name) + ' and sign in, and its accounts appear here.'}</div>`}</div>
+  </section>`;
+}
+
+// Claude Code and the Claude desktop app share one account, so Claude Code only gets its own
+// column when it actually has saved logins; its accounts are switched with the desktop card.
+// Claude Code and the desktop app are one account when the uuids match: that account is shown
+// once, on the Claude card, and switching it moves both. Claude Code only gets its own column
+// for a login that has no desktop account.
+function render() {
+  const desktop = providers.find((p) => p.id === 'claude-desktop');
+  const ids = new Set((desktop ? desktop.profiles : []).map((a) => a.uuid));
+  const shown = providers.map((p) => (p.id !== 'claude' ? p : { ...p, profiles: p.profiles.filter((a) => !ids.has(a.uuid)) }));
+  deck.innerHTML = shown.filter((p) => p.id !== 'claude' || p.profiles.length).map((p, i) => column(p, i)).join('');
+}
+
+async function run(label, fn) {
+  if (working) return;
+  working = label; render();
+  try { await fn(); } catch (e) { toast(e.message); } finally { working = ''; render(); }
+}
+
+deck.addEventListener('click', async (ev) => {
+  const b = ev.target.closest('button[data-act]');
+  if (!b) return;
+  const { act, p: pid, id } = b.dataset;
+  const p = providers.find((x) => x.id === pid);
+  const a = p.profiles.find((x) => x.id === id);
+  const name = a ? a.label || a.email : '';
+  if (act === 'switch') {
+    const warn = p.hostApp
+      ? `${p.name} will close and reopen signed in as ${name}. Any Claude Code session running inside it — including the one that opened this deck — will end. Continue?`
+      : `${p.name} will close and reopen signed in as ${name}. Continue?`;
+    if (p.restart && p.running && !(await ask(warn))) return;
+    run('switch', async () => { await api(`${pid}/switch`, { id }); toast(`${p.name} is now ${name}`); refreshUsage(true); });
+  } else if (act === 'resign') {
+    // The safe way back in: the tool is signed out on this computer only, so whoever is signed
+    // in now stays saved and working. Signing out inside the tool would end that login as well.
+    const cur = p.profiles.find((x) => x.active);
+    const keep = cur ? ` ${cur.label || cur.email} stays saved and keeps working.` : '';
+    const end = p.hostApp && p.running ? ' Any Claude Code session inside it will end.' : '';
+    if (!(await ask(`${p.name} will ${p.restart && p.running ? 'close and reopen' : 'be left'} signed out on this computer. Sign in there as ${name} and it is saved again.${keep}${end} Continue?`))) return;
+    run('signout', async () => { await api(`${pid}/signout`, {}); toast(`Now sign in to ${p.name} as ${name}.`); });
+  } else if (act === 'signout') {
+    const soEnd = p.hostApp && p.running ? ' Any Claude Code session inside it will end.' : '';
+    if (!(await ask(`This signs ${p.name} out so you can sign in with another account. The current account stays saved here.${p.restart && p.running ? ` ${p.name} will close and reopen.` : ''}${soEnd} Continue?`))) return;
+    run('signout', async () => { const j = await api(`${pid}/signout`, {}); toast(j.hint); });
+  } else if (act === 'unlock') {
+    run('unlock', async () => { await api(`${pid}/unlock`, {}); tried.clear(); refreshUsage(true); });
+  } else if (act === 'usage') {
+    b.disabled = true; b.textContent = 'Checking…';
+    api(`${pid}/usage`, { id }).catch((e) => toast(e.message));
+  } else if (act === 'rename') {
+    const dlg = document.getElementById('rename'), input = document.getElementById('rename-input');
+    input.value = a.label || '';
+    dlg.onclose = () => { if (dlg.returnValue === 'ok') api(`${pid}/rename`, { id, label: input.value.trim() }).catch((e) => toast(e.message)); };
+    dlg.returnValue = ''; dlg.showModal(); input.select();
+  } else if (act === 'remove') {
+    if (await ask(`Remove ${name} from the deck? You would need to sign in again to add it back.`)) api(`${pid}/remove`, { id }).catch((e) => toast(e.message));
+  }
+});
+
+// Checks usage for accounts whose figures are missing or older than 10 minutes.
+async function refreshUsage(force) {
+  const jobs = [];
+  for (const p of providers) {
+    if (!p.installed) continue;
+    if (p.usageLocked) {
+      // Unlock automatically (macOS shows its own prompt once). After a denial, wait 10 min
+      // before asking again, so a "no" is respected without a nagging banner.
+      const t = unlockTried.get(p.id) || 0;
+      if (Date.now() - t < 600000) continue;
+      unlockTried.set(p.id, Date.now());
+      try { await api(`${p.id}/unlock`, {}); } catch { continue; }
+    }
+    for (const a of p.profiles) {
+      if ((p.id === 'antigravity' || p.id === 'claude-desktop') && !a.active) continue;
+      const stale = !a.usage?.fetchedAt || Date.now() - a.usage.fetchedAt > 60000;
+      const last = tried.get(a.id) || 0;
+      if (!(force && a.active) && (!stale || Date.now() - last < 25000)) continue;
+      tried.set(a.id, Date.now());
+      jobs.push(api(`${p.id}/usage`, { id: a.id }).catch(() => {}));
+    }
+  }
+  await Promise.all(jobs); // every account refreshes at once, not one after another
+}
+
+async function tick() {
+  if (!working) { try { await api('state'); } catch { toast('Account Deck is not running. Start it again.'); } }
+}
+tick().then(() => refreshUsage());
+setInterval(tick, 5000);
+setInterval(() => refreshUsage(), 30000);
+</script>
+</body>
+</html>
