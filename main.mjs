@@ -2,6 +2,8 @@
 // (click one to switch), plus a window showing the full deck.
 import { app, Tray, Menu, BrowserWindow, Notification, nativeImage, dialog, shell } from 'electron';
 import path from 'node:path';
+import fs from 'node:fs';
+import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { start, state, routes, PROVIDERS, store } from './server.mjs';
 
@@ -9,9 +11,93 @@ const MAC = process.platform === 'darwin';
 let tray = null, win = null, port = 0, lastMenu = '', working = false, known = null;
 const unlockTried = new Map();
 
-if (!app.requestSingleInstanceLock()) app.quit();
-app.on('second-instance', () => openWindow());
+// A short log in ~/.account-deck/deck.log, kept under 200 KB, for finding start-up problems.
+const LOG = path.join(store.HOME, 'deck.log');
+function log(...parts) {
+  try {
+    fs.mkdirSync(store.HOME, { recursive: true });
+    if (fs.existsSync(LOG) && fs.statSync(LOG).size > 200000) fs.renameSync(LOG, LOG + '.1');
+    fs.appendFileSync(LOG, `${new Date().toISOString()} ${parts.join(' ')}\n`);
+  } catch {}
+}
+process.on('uncaughtException', (e) => log('uncaught:', e?.stack || e));
+process.on('unhandledRejection', (e) => log('unhandled rejection:', e?.stack || e));
+log('launch', JSON.stringify(process.argv.slice(1)));
+
+if (!app.requestSingleInstanceLock()) { log('another copy is running; quitting'); app.quit(); }
+// Started at login: stay in the menu bar instead of opening the window. Windows marks that
+// with a --hidden argument. macOS and Linux use an environment variable, because the packaged
+// Mac app does not start at all when launched with an extra argument.
+const HIDDEN = '--hidden';
+const HIDDEN_ENV = 'ACCOUNT_DECK_HIDDEN';
+app.on('second-instance', (_e, argv) => { if (!argv.includes(HIDDEN)) openWindow(); });
 app.on('window-all-closed', () => {}); // keep living in the tray
+
+// Start at login. macOS gets a per-user LaunchAgent, which (unlike the system login-item
+// switch) can tell the app it was started at login, so the deck starts quietly in the menu bar.
+// Linux gets an XDG autostart entry. Windows uses its own login items with --hidden.
+const LINUX = process.platform === 'linux';
+const AGENT = path.join(os.homedir(), 'Library', 'LaunchAgents', 'local.accountdeck.app.plist');
+const AUTOSTART = path.join(process.env.XDG_CONFIG_HOME || path.join(os.homedir(), '.config'), 'autostart', 'account-deck.desktop');
+const program = () => (LINUX && process.env.APPIMAGE) || process.execPath;
+const xml = (v) => v.replace(/[<>&'"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c]));
+const agentFor = (exe) => `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>local.accountdeck.app</string>
+  <key>ProgramArguments</key><array><string>${xml(exe)}</string></array>
+  <key>EnvironmentVariables</key><dict><key>${HIDDEN_ENV}</key><string>1</string></dict>
+  <key>RunAtLoad</key><true/>
+  <key>ProcessType</key><string>Interactive</string>
+  <key>LimitLoadToSessionType</key><string>Aqua</string>
+</dict>
+</plist>
+`;
+
+function startsAtLogin() {
+  if (MAC) return fs.existsSync(AGENT);
+  if (LINUX) return fs.existsSync(AUTOSTART);
+  return app.getLoginItemSettings({ args: [HIDDEN] }).openAtLogin;
+}
+
+function setStartsAtLogin(on) {
+  try {
+    if (MAC) {
+      if (!on) return fs.rmSync(AGENT, { force: true });
+      fs.mkdirSync(path.dirname(AGENT), { recursive: true });
+      return fs.writeFileSync(AGENT, agentFor(program()));
+    }
+    if (LINUX) {
+      if (!on) return fs.rmSync(AUTOSTART, { force: true });
+      fs.mkdirSync(path.dirname(AUTOSTART), { recursive: true });
+      return fs.writeFileSync(AUTOSTART, `[Desktop Entry]\nType=Application\nName=Account Deck\nExec=env ${HIDDEN_ENV}=1 "${program()}"\nX-GNOME-Autostart-enabled=true\n`);
+    }
+    app.setLoginItemSettings({ openAtLogin: on, args: [HIDDEN] });
+  } catch (e) {
+    dialog.showMessageBox({ type: 'error', message: 'Could not change Start at login', detail: e.message });
+  }
+}
+
+// Keeps the login entry pointing at this copy of the app (after a move to Applications, say),
+// and carries over a login item made by an earlier version through the system switch.
+function tidyLoginItem() {
+  if (MAC && app.getLoginItemSettings().openAtLogin) { app.setLoginItemSettings({ openAtLogin: false }); setStartsAtLogin(true); }
+  if (MAC && startsAtLogin()) {
+    try { if (fs.readFileSync(AGENT, 'utf8') !== agentFor(program())) setStartsAtLogin(true); } catch {}
+  }
+}
+
+// A copy opened straight from a download asks once to move itself into Applications, so the
+// login entry and macOS's permissions stay attached to one stable place.
+async function offerMove() {
+  if (!MAC || !app.isPackaged || app.isInApplicationsFolder()) return;
+  const asked = path.join(store.HOME, '.asked-to-move');
+  if (fs.existsSync(asked)) return;
+  const { response } = await dialog.showMessageBox({ type: 'question', buttons: ['Move to Applications', 'Not now'], defaultId: 0, cancelId: 1, message: 'Move Account Deck to your Applications folder?', detail: 'It then keeps working from one place, including when it starts at login.' });
+  try { fs.mkdirSync(store.HOME, { recursive: true }); fs.writeFileSync(asked, ''); } catch {}
+  if (response === 0) { try { app.moveToApplicationsFolder(); } catch (e) { dialog.showMessageBox({ type: 'error', message: 'Could not move Account Deck', detail: e.message }); } }
+}
 
 // The logo, drawn from assets/logo.svg by assets/render-icons.cjs. On macOS the menu bar gets the
 // one-colour mark (a template image, so macOS tints it for light and dark menu bars); elsewhere
@@ -99,8 +185,8 @@ function refreshMenu() {
     items.push({ type: 'separator' });
   }
   items.push({ label: 'Open Account Deck', click: openWindow });
-  if (process.platform !== 'linux') {
-    items.push({ label: 'Start at login', type: 'checkbox', checked: app.getLoginItemSettings().openAtLogin, click: (i) => app.setLoginItemSettings({ openAtLogin: i.checked }) });
+  {
+    items.push({ label: 'Start at login', type: 'checkbox', checked: startsAtLogin(), click: (i) => { setStartsAtLogin(i.checked); refreshMenu((lastMenu = '')); } });
   }
   items.push({ type: 'separator' }, { label: 'Quit Account Deck', click: () => app.quit() });
   tray.setContextMenu(Menu.buildFromTemplate(items));
@@ -131,13 +217,18 @@ async function refreshUsage() {
 app.whenReady().then(async () => {
   if (MAC) app.dock?.hide();
   app.setAboutPanelOptions({ applicationName: 'Account Deck', iconPath: LOGO });
+  log('ready');
   port = await start();
+  log('page on port', port);
   tray = new Tray(trayIcon());
   tray.setToolTip('Account Deck');
   refreshMenu();
   setInterval(refreshMenu, 5000);
   setTimeout(refreshUsage, 3000);
   setInterval(refreshUsage, 45000);
-  if (!app.getLoginItemSettings().wasOpenedAtLogin) openWindow();
+  tidyLoginItem();
+  const atLogin = process.argv.includes(HIDDEN) || process.env[HIDDEN_ENV] === '1' || app.getLoginItemSettings().wasOpenedAtLogin;
+  delete process.env[HIDDEN_ENV]; // so apps the deck reopens do not inherit it
+  if (!atLogin) { openWindow(); offerMove(); }
   console.log(`Account Deck running: tray ready, page on port ${port}`);
 });
