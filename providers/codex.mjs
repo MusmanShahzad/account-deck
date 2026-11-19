@@ -54,6 +54,8 @@ export default {
     name: 'ChatGPT', dataName: 'com.openai.codex', dbEnv: 'CODEX_DESKTOP_DB',
     macApp: '/Applications/ChatGPT.app', macBinary: '/Applications/ChatGPT.app/Contents/MacOS/ChatGPT',
     winExe: 'ChatGPT/ChatGPT.exe', linuxNames: ['chatgpt', 'ChatGPT'],
+    // Usually a Microsoft Store app on Windows, and it stays in the tray when its window closes.
+    winStoreName: 'ChatGPT', forceAfterMs: 8000,
   }),
   signInHint: 'Codex sign-in is opening in your browser. The new account shows up here once you finish.',
 
