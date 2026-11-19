@@ -30,21 +30,35 @@ Account Deck keeps a saved copy of every account you sign in with and switches b
 
 Some things are deliberately left alone: your own model-provider API keys in Cursor, MCP server sign-ins in Claude Code, and anything each app already files per account by itself. The comment at the top of each file in [`providers/`](providers) spells out exactly what is moved and why.
 
-## Install
+## Download
 
-Download the build for your system from the releases page, or build it yourself (see [Development](#development)).
-
-| System | File |
+| System | Download |
 |---|---|
-| macOS (Apple silicon) | `Account Deck-<version>-arm64.dmg` |
-| Windows (x64) | `Account Deck Setup <version>.exe` |
-| Linux (x64) | `Account Deck-<version>.AppImage` |
+| macOS, Apple silicon (M1 and later) | [**Account-Deck-mac-arm64.dmg**](https://github.com/MusmanShahzad/account-deck/releases/latest/download/Account-Deck-mac-arm64.dmg) |
+| macOS, Intel | [**Account-Deck-mac-x64.dmg**](https://github.com/MusmanShahzad/account-deck/releases/latest/download/Account-Deck-mac-x64.dmg) |
+| Windows 10 and 11 (x64) | [**Account-Deck-windows-x64-setup.exe**](https://github.com/MusmanShahzad/account-deck/releases/latest/download/Account-Deck-windows-x64-setup.exe) |
+| Linux (x64) | [**Account-Deck-linux-x86_64.AppImage**](https://github.com/MusmanShahzad/account-deck/releases/latest/download/Account-Deck-linux-x86_64.AppImage) |
 
-The builds are not code-signed. On macOS, the first time, right-click the app and choose **Open**, or run:
+Every version is on the [releases page](https://github.com/MusmanShahzad/account-deck/releases). To build it yourself, see [Development](#development).
 
-```bash
-xattr -dr com.apple.quarantine "/Applications/Account Deck.app"
-```
+### First run
+
+The builds are not notarized by Apple or signed for Windows, so each system asks you to confirm the first time.
+
+- **macOS:** open the `.dmg` and drag **Account Deck** into **Applications**. The first time you open it, macOS says it can't check the app: open **System Settings → Privacy & Security**, scroll down and click **Open Anyway**. Alternatively, run this once:
+
+  ```bash
+  xattr -dr com.apple.quarantine "/Applications/Account Deck.app"
+  ```
+
+- **Windows:** if SmartScreen says "Windows protected your PC", click **More info → Run anyway**. The installer puts Account Deck in your user folder; no admin rights are needed.
+- **Linux:** make the file executable, then run it:
+
+  ```bash
+  chmod +x Account-Deck-linux-x86_64.AppImage && ./Account-Deck-linux-x86_64.AppImage
+  ```
+
+Account Deck lives in the menu bar (macOS) or the system tray (Windows and Linux). To have it start with your computer, turn on **Start at login** in its menu. It then starts quietly, without opening its window.
 
 On macOS the deck asks for keychain access once per tool, for two reasons: Claude Code keeps its login in the keychain, and reading account names and usage for Cursor and the Claude app needs their storage keys. You can deny the storage-key prompts; switching still works without them.
 
@@ -61,7 +75,7 @@ Other things you can do:
 - **Rename** an account, for example "work" and "personal", so you can tell them apart.
 - **Refresh** an account's usage now. Usage is otherwise refreshed every 45 seconds in the background.
 - **Remove** an account from the deck. Its saved login is deleted from this computer; nothing changes on the service.
-- **Start at login**, from the menu bar.
+- **Start at login**, from the menu bar. It starts quietly in the menu bar or tray, without opening the window.
 - **Pick a theme** (Auto, Light or Dark) at the top right of the window. Auto follows your system setting; a choice you make is remembered.
 
 Switching the Claude desktop app restarts it, which ends any Claude Code session running inside it.
@@ -99,12 +113,11 @@ npm run web         # just the page, at http://127.0.0.1:4777
 Build installers:
 
 ```bash
-npm run dist:mac
-npx electron-builder --win --x64
-npx electron-builder --linux --x64
+npm run dist          # everything: macOS (Apple silicon and Intel), Windows and Linux
+npm run dist:mac      # or one system at a time
 ```
 
-Output goes to `dist/`.
+Output goes to `dist/`, with the same file names as the downloads above. The Mac build is ad-hoc signed, so it runs on other Macs after the first-run confirmation. If the app misbehaves, `~/.account-deck/deck.log` has a short start-up log.
 
 The logo is generated from code. Edit [`assets/make-logo.mjs`](assets/make-logo.mjs), then:
 
