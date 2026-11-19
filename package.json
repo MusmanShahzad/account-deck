@@ -1,0 +1,78 @@
+{
+  "name": "account-deck",
+  "version": "1.0.0",
+  "description": "Switch between saved Claude, Claude Code, Codex, Cursor and Antigravity accounts and see usage, from the menu bar or system tray.",
+  "author": "Account Deck contributors",
+  "private": true,
+  "type": "module",
+  "main": "main.mjs",
+  "scripts": {
+    "start": "electron .",
+    "web": "node server.mjs",
+    "dist:mac": "electron-builder --mac",
+    "dist:win": "electron-builder --win",
+    "dist:linux": "electron-builder --linux",
+    "icons": "node assets/make-logo.mjs && electron assets/render-icons.cjs"
+  },
+  "devDependencies": {
+    "electron": "^39.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "local.accountdeck.app",
+    "productName": "Account Deck",
+    "files": [
+      "main.mjs",
+      "server.mjs",
+      "lib/**",
+      "providers/**",
+      "public/**",
+      "package.json",
+      "assets/*.png",
+      "assets/logo.svg"
+    ],
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.developer-tools",
+      "extendInfo": {
+        "LSUIElement": true
+      },
+      "icon": "build/icon.icns"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "build/icon.png"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Development",
+      "icon": "build/icon.png"
+    },
+    "directories": {
+      "buildResources": "build"
+    },
+    "dmg": {
+      "icon": "build/icon.icns"
+    }
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "codex",
+    "cursor",
+    "antigravity",
+    "account-switcher",
+    "menu-bar",
+    "electron"
+  ]
+}
