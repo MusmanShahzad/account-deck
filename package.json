@@ -1,6 +1,6 @@
 {
   "name": "account-deck",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Switch between saved Claude, Claude Code, Codex, Cursor and Antigravity accounts and see usage, from the menu bar or system tray.",
   "author": "Account Deck contributors",
   "private": true,
