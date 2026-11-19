@@ -13,19 +13,37 @@ import crypto from 'node:crypto';
 import { execFile, execFileSync, spawn } from 'node:child_process';
 import { DatabaseSync } from 'node:sqlite';
 import { writeSecret, HOME as DECK_HOME } from '../lib/store.mjs';
+import { startMenuAppId, launchWindowsApp, windowsProcesses, closeWindowsProcesses, retryLocked } from '../lib/winapp.mjs';
 
 const OS = process.platform;
 const MAC = OS === 'darwin';
 const home = os.homedir();
+const LOCAL = process.env.LOCALAPPDATA || path.join(home, 'AppData/Local');
+
+// Windows keeps the app's data in %APPDATA%\Claude for the regular installer, but a Microsoft
+// Store (MSIX) install is given its own copy under %LOCALAPPDATA%\Packages\<package>. When
+// several exist, the one the app wrote to last is the live one.
+export function windowsDataDir(roaming = path.join(process.env.APPDATA || path.join(home, 'AppData/Roaming'), 'Claude'), packages = path.join(LOCAL, 'Packages')) {
+  const found = [roaming];
+  try { for (const d of fs.readdirSync(packages)) if (/claude/i.test(d)) found.push(path.join(packages, d, 'LocalCache', 'Roaming', 'Claude')); } catch {}
+  const live = found.map((d) => { try { return { d, t: fs.statSync(path.join(d, 'config.json')).mtimeMs }; } catch { return null; } }).filter(Boolean);
+  return live.length ? live.sort((a, b) => b.t - a.t)[0].d : roaming;
+}
+
 const DATA = MAC ? path.join(home, 'Library/Application Support/Claude')
-  : OS === 'win32' ? path.join(process.env.APPDATA || path.join(home, 'AppData/Roaming'), 'Claude')
+  : OS === 'win32' ? windowsDataDir()
   : path.join(process.env.XDG_CONFIG_HOME || path.join(home, '.config'), 'Claude');
 const CONFIG = process.env.CLAUDE_DESKTOP_CONFIG || path.join(DATA, 'config.json');
 const WEB_ROOT = process.env.CLAUDE_DESKTOP_DATA || DATA;
 const MAC_APP = '/Applications/Claude.app';
 const MAC_BIN = '/Applications/Claude.app/Contents/MacOS/Claude';
 const MAC_HELPERS = '/Applications/Claude.app/Contents/Frameworks/';
-const WIN_EXE = path.join(process.env.LOCALAPPDATA || path.join(home, 'AppData/Local'), 'AnthropicClaude', 'claude.exe');
+const WIN_EXE = path.join(LOCAL, 'AnthropicClaude', 'claude.exe');
+// The Claude Code CLI is also claude.exe on Windows, so the app's processes are picked by path:
+// the regular installer's folder or a Store package. Claude Code sessions in a terminal are
+// never counted, and never closed.
+export const isWindowsDesktopApp = (p) => /\\AnthropicClaude\\|\\WindowsApps\\[^\\]*Claude/i.test(p || '');
+const windowsApp = () => windowsProcesses('claude.exe').filter((p) => isWindowsDesktopApp(p.path));
 const LINUX_NAMES = ['claude-desktop', 'Claude', 'claude'];
 
 // The account-bound keys in config.json, taken from how the app itself uses them:
@@ -186,10 +204,7 @@ function details(cfg) {
 function pids() {
   try {
     if (MAC) return execFileSync('pgrep', ['-f', MAC_BIN], { encoding: 'utf8' }).split('\n').filter(Boolean).map(Number);
-    if (OS === 'win32') {
-      const out = execFileSync('tasklist', ['/FI', 'IMAGENAME eq claude.exe', '/FO', 'CSV', '/NH'], { encoding: 'utf8', windowsHide: true });
-      return [...out.matchAll(/^"[^"]+","(\d+)"/gm)].map((m) => Number(m[1]));
-    }
+    if (OS === 'win32') return windowsApp().map((p) => p.pid);
     const found = [];
     for (const d of fs.readdirSync('/proc')) {
       if (!/^\d+$/.test(d)) continue;
@@ -222,8 +237,8 @@ function saveWeb(id) {
     const src = path.join(WEB_ROOT, d);
     if (fs.existsSync(src)) fs.cpSync(src, path.join(tmp, d), { recursive: true });
   }
-  fs.rmSync(dest, { recursive: true, force: true });
-  fs.renameSync(tmp, dest);
+  retryLocked(() => fs.rmSync(dest, { recursive: true, force: true }));
+  retryLocked(() => fs.renameSync(tmp, dest));
 }
 
 // Puts the account's own page storage in place (or empty storage). On any failure the storage
@@ -237,7 +252,7 @@ function loadWeb(id) {
   try {
     for (const d of WEB) {
       const live = path.join(WEB_ROOT, d);
-      if (fs.existsSync(live)) { fs.renameSync(live, path.join(old, d)); moved.push(d); }
+      if (fs.existsSync(live)) { retryLocked(() => fs.renameSync(live, path.join(old, d))); moved.push(d); }
     }
     if (src && fs.existsSync(src)) {
       for (const d of WEB) {
@@ -276,7 +291,9 @@ export default {
   needsSignInHint: 'This account was saved without its sign-in, so the Claude app cannot be switched to it yet. Use Sign in again, sign in to it once in the Claude app, and it is saved properly from then on.',
 
   detect() {
-    const installed = MAC ? fs.existsSync(MAC_APP) : OS === 'win32' ? fs.existsSync(WIN_EXE) : fs.existsSync(DATA);
+    const installed = MAC ? fs.existsSync(MAC_APP)
+      : OS === 'win32' ? fs.existsSync(WIN_EXE) || fs.existsSync(CONFIG) || !!startMenuAppId('Claude')
+      : fs.existsSync(DATA);
     return { installed: installed || fs.existsSync(CONFIG), running: pids().length > 0 };
   },
 
@@ -327,8 +344,13 @@ export default {
   async quit() {
     const running = pids();
     if (!running.length) return false;
-    if (OS === 'win32') { try { execFileSync('taskkill', ['/IM', 'claude.exe'], { stdio: 'ignore', windowsHide: true }); } catch {} }
-    else for (const pid of running) { try { process.kill(pid, 'SIGTERM'); } catch {} }
+    if (OS === 'win32') {
+      // The app stays in the tray when its window closes, so after a polite close it is ended
+      // outright. The deck then saves the account being left from what is on disk.
+      if (await closeWindowsProcesses(windowsApp(), windowsApp, { forceAfterMs: 8000 })) return true;
+      throw new Error('The Claude app did not close within 30 seconds. Quit it from its tray icon, then try again.');
+    }
+    for (const pid of running) { try { process.kill(pid, 'SIGTERM'); } catch {} }
     for (let i = 0; i < 150; i++) {
       await sleep(200);
       if (!pids().length) {
@@ -342,7 +364,8 @@ export default {
   },
 
   launch() {
-    const [cmd, args] = MAC ? ['open', ['-a', MAC_APP]] : OS === 'win32' ? [WIN_EXE, []] : [LINUX_NAMES[0], []];
+    if (OS === 'win32') return launchWindowsApp(WIN_EXE, 'Claude', fs.existsSync);
+    const [cmd, args] = MAC ? ['open', ['-a', MAC_APP]] : [LINUX_NAMES[0], []];
     const child = spawn(cmd, args, { detached: true, stdio: 'ignore' });
     child.on('error', () => {});
     child.unref();
